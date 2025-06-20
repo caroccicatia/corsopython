@@ -1,6 +1,3 @@
-# Esercizi 20/06/2025
-
-## ESERCIZIO 1
 ## **TEST FINALE OOP - "La Battaglia dei Regni"**
 ### **Obiettivo**
 # Realizza un **gioco a turni da terminale** in cui il **giocatore** 
@@ -127,7 +124,7 @@ class Soldato(ABC):
         self.__salute = min(100, self.__salute + punti)
 
     def vivo(self):
-        vivo = False if self.__salute == 0 else True
+        vivo = False if self.__salute <= 0 else True
         return vivo
 
     def stato(self):
@@ -236,6 +233,10 @@ def stampa_esercito(esercito):
     for i, soldato in enumerate(esercito, 1):
             print(f"{i}. {soldato.get_nome()} - {soldato.__class__.__name__} | Salute: {soldato.get_salute()}, Attacco: {soldato.get_attacco()}, Difesa: {soldato.get_difesa()}")
 
+def stampa_soldato(nuovo): 
+    print(f"\nHai arruolato {nuovo.get_nome()} - {nuovo.descrizione()}")
+    print(f"Salute: {nuovo.get_salute()}, Attacco: {nuovo.get_attacco()}, Difesa: {nuovo.get_difesa()}\n")
+
 def allestisci_esercito(budget, esercito = None):
     if esercito is None: 
         esercito = []
@@ -253,28 +254,31 @@ def allestisci_esercito(budget, esercito = None):
                     nuovo = Cavaliere(choice(nomi_soldati))
                     esercito.append(nuovo)
                     budget -= Cavaliere.costo
+                    stampa_soldato(nuovo)
                 else: print('Avido! Non hai le monete d\'oro necessarie.')
             elif soldato == '2': 
                 if budget >= Arciere.costo:
                     nuovo = Arciere(choice(nomi_soldati))
                     esercito.append(nuovo)
                     budget -= Arciere.costo
+                    stampa_soldato(nuovo)
                 else: print('Avido! Non hai le monete d\'oro necessarie.')
             elif soldato == '3': 
                 if budget >= Guaritore.costo: 
                     nuovo = Guaritore(choice(nomi_soldati))
                     esercito.append(nuovo)
                     budget -= Guaritore.costo
+                    stampa_soldato(nuovo)
                 else: print('Avido! Non hai le monete d\'oro necessarie.')
             elif soldato == '4': 
                 if budget >= Mago.costo:
                     nuovo = Mago(choice(nomi_soldati)) 
                     esercito.append(nuovo)
                     budget -= Mago.costo
+                    stampa_soldato(nuovo)
                 else: print('Avido! Non hai le monete d\'oro necessarie.')
             else: print('Selezione non valida.')
-            print(f"\nHai arruolato {nuovo.get_nome()} - {nuovo.descrizione()}")
-            print(f"Salute: {nuovo.get_salute()}, Attacco: {nuovo.get_attacco()}, Difesa: {nuovo.get_difesa()}\n")
+
         elif ingresso == '2' or budget == 0: 
             print('Iniziamo.\n')
             print("\nEcco il tuo esercito schierato:")
@@ -283,11 +287,10 @@ def allestisci_esercito(budget, esercito = None):
         else: print('Selezione non valida.')
 
 
-def genera_esercito_IA(esercito, budget_IA, esercito_IA = None):
+def genera_esercito_IA(budget_IA, esercito_IA = None):
     if esercito_IA is None:
         esercito_IA = []
 
-    numero_soldati = len(esercito)
     classi = [Cavaliere, Mago, Arciere, Guaritore]
     nomi = [ "Ezzelino", "Mastino","Ugolino", "Corrado","Rainaldo","Tiberto",    
     "Azzolino","Malvino", "Astolfo","Grimaldo","Manfredi", "Gualtiero",  
@@ -373,21 +376,37 @@ def combattimento(sfidante_1, sfidante_2, sfidanti, sfidanti_IA):
 
 def torneo(esercito, esercito_IA):
 
-    numero_combattimenti = max(len(esercito), len(esercito_IA))
-    sfidanti = esercito.copy()
-    sfidanti_IA = esercito_IA.copy()
-    fight = 0
-    while fight <= numero_combattimenti:
-        if fight <= len(sfidanti)-1: sfidante_1 = sfidanti[fight]
-        else: sfidante_1 = choice(sfidanti)
-        if fight <= len(sfidanti_IA)-1: sfidante_2 = sfidanti_IA[fight]
-        else: sfidante_2 = choice(sfidanti_IA)
+    round_attuale = 1
+    vivi_giocatore = esercito
+    vivi_IA = esercito_IA
+    while round_attuale <= max(len(esercito), len(esercito_IA)):
 
-        vincitore = combattimento(sfidante_1, sfidante_2, sfidanti, sfidanti_IA)
-        if vincitore == sfidante_1: 
-            esercito_IA.remove(sfidante_2)
-        else: esercito.remove(sfidante_1)
-        fight +=1
+        # Termina se uno dei due eserciti è vuoto
+        if not vivi_giocatore or not vivi_IA:
+            break
+
+        print(f"\nDuello {round_attuale}:")
+        
+        # Scegli i combattenti in ordine o casualmente se indice troppo alto
+        for el in esercito:
+            if el.vivo() and round_attuale-1 < len(esercito):  sfidante_1 = esercito[round_attuale - 1]
+            else: sfidante_1 = choice(vivi_giocatore)
+
+        for el in esercito_IA:
+            if el.vivo() and round_attuale-1 < len(esercito_IA): sfidante_2 = esercito_IA[round_attuale -1]
+            else: sfidante_2 = choice(vivi_IA)
+
+        vincitore = combattimento(sfidante_1, sfidante_2, esercito, esercito_IA)
+
+        # Filtra solo soldati vivi
+        vivi_giocatore = [s for s in esercito if s.vivo()]
+        vivi_IA = [s for s in esercito_IA if s.vivo()]
+
+        # Non rimuovere direttamente: aggiorna la lista mantenendo solo vivi
+        round_attuale += 1
+
+    esercito = vivi_giocatore
+    esercito_IA = vivi_IA
 
     if len(esercito) > 0 and len(esercito_IA) > 0:
         print('La battaglia si è conclusa!')
@@ -395,7 +414,7 @@ def torneo(esercito, esercito_IA):
         stampa_esercito(esercito)
         print('si riorganizzano.\n')
 
-        print('Le canaglie del regno delle ombre')
+        print('Le canaglie del Regno delle ombre')
         stampa_esercito(esercito_IA)
         print('si riorganizzano.\n')
     
@@ -410,20 +429,20 @@ def torneo(esercito, esercito_IA):
         print('affilano le lame per la prossima conquista!\n')
         print('----GAME OVER---')
 
-    return esercito, esercito_IA
+    return vivi_giocatore, vivi_IA
 
 ## Gioco 'La Guerra di Lux e Nyx'
 
 def GuerraLuxeNyx():
     print('Re di Lux, la resa dei conti con il Regno di Nyx è alle porte!\nE\' il momento di organizzare l\'esercito!')
-    budget = 1000
-    budget_IA = 1000
+    budget = 400
+    budget_IA = 400
     esercito = []
     esercito_IA = []
     round = 1
 
     esercito, budget = allestisci_esercito(budget, esercito)
-    esercito_IA, budget_IA = genera_esercito_IA(esercito, budget_IA, esercito_IA)
+    esercito_IA, budget_IA = genera_esercito_IA(budget_IA, esercito_IA)
 
     while True:
         print(f'---ROUND {round}---')
@@ -435,15 +454,13 @@ def GuerraLuxeNyx():
         budget_IA += 300
         print("\n--- Fine del round. Preparati al prossimo! ---\n")
         print(f"Hai ricevuto +300 monete. Totale: {budget}")
-        esercito, budget = allestisci_esercito(esercito, budget)
-        esercito_IA, budget_IA = genera_esercito_IA(esercito_IA, budget_IA)
+        esercito, budget = allestisci_esercito(budget, esercito)
+        esercito_IA, budget_IA = genera_esercito_IA(budget_IA, esercito_IA)
 
-        round_counter += 1
+        round += 1
 
     print('\nGrazie per aver giocato!')
 
 
-
-GuerraLuxeNyx()
-
-
+if __name__ == "__main__":
+    GuerraLuxeNyx()
